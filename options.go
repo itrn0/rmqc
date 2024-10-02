@@ -14,20 +14,15 @@ type Options struct {
 	Debug     bool
 }
 
-func defaultOptions() *Options {
-	return &Options{
-		Capacity: 10,
-		Args:     nil,
-		Logger:   slog.Default(),
-	}
-}
-
 func handleOptions(options *Options) *Options {
 	if options == nil {
-		return defaultOptions()
+		options = &Options{}
 	}
 	if options.Capacity <= 0 {
-		options.Capacity = defaultOptions().Capacity
+		options.Capacity = 10
+	}
+	if options.Logger == nil {
+		options.Logger = slog.Default()
 	}
 	return options
 }
