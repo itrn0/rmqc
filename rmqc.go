@@ -105,6 +105,8 @@ func (p *Consumer) connect() error {
 				ContentType:  msg.ContentType,
 				Timestamp:    msg.Timestamp,
 				MessageId:    msg.MessageId,
+				ackFn:        msg.Ack,
+				nackFn:       msg.Nack,
 			}
 			if p.options.Debug {
 				p.options.Logger.Debug("message added to channel", "tag", msg.DeliveryTag,
