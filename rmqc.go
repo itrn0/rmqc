@@ -60,12 +60,18 @@ func (p *Consumer) connect() error {
 		return fmt.Errorf("failed to connect: %w", err)
 	}
 	defer conn.Close()
+	if p.options.Debug {
+		p.options.Logger.Debug("connected to RabbitMQ", "ip", conn.LocalAddr().String())
+	}
 
 	ch, err := conn.Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open a channel: %w", err)
 	}
 	defer ch.Close()
+	if p.options.Debug {
+		p.options.Logger.Debug("channel opened", "channel", ch)
+	}
 
 	msgCh, err := ch.Consume(
 		p.QueueName,
@@ -80,14 +86,26 @@ func (p *Consumer) connect() error {
 		return fmt.Errorf("failed to consume: %w", err)
 	}
 
-	p.options.Logger.Info("consumer connected to RabbitMQ", "queue", p.QueueName)
+	p.options.Logger.Info("consumer connected to RabbitMQ", "queue", p.QueueName, "ip", conn.LocalAddr().String())
 	defer p.options.Logger.Info("consumer disconnected from RabbitMQ", "queue", p.QueueName)
 
 	for {
 		select {
 		case <-p.ctx.Done():
 			return ErrContextDone
-		case msg := <-msgCh:
+		default:
+		}
+
+		select {
+		case <-p.ctx.Done():
+			return ErrContextDone
+		case msg, msgOk := <-msgCh:
+			if !msgOk {
+				if p.options.Debug {
+					p.options.Logger.Debug("channel closed", "channel", ch)
+				}
+				return nil
+			}
 			if p.options.Debug {
 				p.options.Logger.Debug("received a message", "exchange", msg.Exchange, "routing_key",
 					msg.RoutingKey, "delivery_tag", msg.DeliveryTag, "message_id", msg.MessageId)
