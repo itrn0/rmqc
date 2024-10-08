@@ -104,7 +104,7 @@ func (p *Consumer) connect() error {
 				if p.options.Debug {
 					p.options.Logger.Debug("channel closed", "channel", ch)
 				}
-				return nil
+				return fmt.Errorf("channel closed")
 			}
 			if p.options.Debug {
 				p.options.Logger.Debug("received a message", "exchange", msg.Exchange, "routing_key",
